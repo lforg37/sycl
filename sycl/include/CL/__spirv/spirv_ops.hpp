@@ -289,96 +289,96 @@ __SYCL_CONVERGENT__ extern SYCL_EXTERNAL void
 __spirv_SubgroupBlockWriteINTEL(__attribute__((opencl_global)) uint64_t *Ptr,
                                 dataT Data) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<rW>
-__spirv_FixedSqrtINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<rW>
+__spirv_FixedSqrtINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                        int32_t Quantization = 0, int32_t Overflow = 0) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<rW>
-__spirv_FixedRecipINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<rW>
+__spirv_FixedRecipINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                         int32_t Quantization = 0,
                         int32_t Overflow = 0) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<rW>
-__spirv_FixedRsqrtINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<rW>
+__spirv_FixedRsqrtINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                         int32_t Quantization = 0,
                         int32_t Overflow = 0) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<rW>
-__spirv_FixedSinINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<rW>
+__spirv_FixedSinINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                       int32_t Quantization = 0, int32_t Overflow = 0) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<rW>
-__spirv_FixedCosINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<rW>
+__spirv_FixedCosINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                       int32_t Quantization = 0, int32_t Overflow = 0) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<2 * rW>
-__spirv_FixedSinCosINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<2 * rW>
+__spirv_FixedSinCosINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                          int32_t Quantization = 0,
                          int32_t Overflow = 0) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<rW>
-__spirv_FixedSinPiINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<rW>
+__spirv_FixedSinPiINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                         int32_t Quantization = 0,
                         int32_t Overflow = 0) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<rW>
-__spirv_FixedCosPiINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<rW>
+__spirv_FixedCosPiINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                         int32_t Quantization = 0,
                         int32_t Overflow = 0) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<2 * rW>
-__spirv_FixedSinCosPiINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<2 * rW>
+__spirv_FixedSinCosPiINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                            int32_t Quantization = 0,
                            int32_t Overflow = 0) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<rW>
-__spirv_FixedLogINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<rW>
+__spirv_FixedLogINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                       int32_t Quantization = 0, int32_t Overflow = 0) noexcept;
 template <int W, int rW>
-extern SYCL_EXTERNAL ap_int<rW>
-__spirv_FixedExpINTEL(ap_int<W> a, bool S, int32_t I, int32_t rI,
+extern SYCL_EXTERNAL _spv::ap_int<rW>
+__spirv_FixedExpINTEL(_spv::ap_int<W> a, bool S, int32_t I, int32_t rI,
                       int32_t Quantization = 0, int32_t Overflow = 0) noexcept;
 
 // In the following built-ins width of arbitrary precision integer type for
 // a floating point variable should be equal to sum of corresponding
 // exponent width E, mantissa width M and 1 for sign bit. I.e. WA = EA + MA + 1.
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatCastINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatCastINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatCastFromIntINTEL(
-    ap_int<WA> A, int32_t Mout, bool FromSign = false,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatCastFromIntINTEL(
+    _spv::ap_int<WA> A, int32_t Mout, bool FromSign = false,
     int32_t EnableSubnormals = 0, int32_t RoundingMode = 0,
     int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatCastToIntINTEL(
-    ap_int<WA> A, int32_t MA, bool ToSign = false, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatCastToIntINTEL(
+    _spv::ap_int<WA> A, int32_t MA, bool ToSign = false, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int WB, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatAddINTEL(
-    ap_int<WA> A, int32_t MA, ap_int<WB> B, int32_t MB, int32_t Mout,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatAddINTEL(
+    _spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B, int32_t MB, int32_t Mout,
     int32_t EnableSubnormals = 0, int32_t RoundingMode = 0,
     int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int WB, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatSubINTEL(
-    ap_int<WA> A, int32_t MA, ap_int<WB> B, int32_t MB, int32_t Mout,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatSubINTEL(
+    _spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B, int32_t MB, int32_t Mout,
     int32_t EnableSubnormals = 0, int32_t RoundingMode = 0,
     int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int WB, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatMulINTEL(
-    ap_int<WA> A, int32_t MA, ap_int<WB> B, int32_t MB, int32_t Mout,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatMulINTEL(
+    _spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B, int32_t MB, int32_t Mout,
     int32_t EnableSubnormals = 0, int32_t RoundingMode = 0,
     int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int WB, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatDivINTEL(
-    ap_int<WA> A, int32_t MA, ap_int<WB> B, int32_t MB, int32_t Mout,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatDivINTEL(
+    _spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B, int32_t MB, int32_t Mout,
     int32_t EnableSubnormals = 0, int32_t RoundingMode = 0,
     int32_t RoundingAccuracy = 0) noexcept;
 
@@ -386,174 +386,174 @@ extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatDivINTEL(
 // Rounding Accuracy.
 template <int WA, int WB>
 extern SYCL_EXTERNAL bool
-__spirv_ArbitraryFloatGTINTEL(ap_int<WA> A, int32_t MA, ap_int<WB> B,
+__spirv_ArbitraryFloatGTINTEL(_spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B,
                               int32_t MB) noexcept;
 
 template <int WA, int WB>
 extern SYCL_EXTERNAL bool
-__spirv_ArbitraryFloatGEINTEL(ap_int<WA> A, int32_t MA, ap_int<WB> B,
+__spirv_ArbitraryFloatGEINTEL(_spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B,
                               int32_t MB) noexcept;
 
 template <int WA, int WB>
 extern SYCL_EXTERNAL bool
-__spirv_ArbitraryFloatLTINTEL(ap_int<WA> A, int32_t MA, ap_int<WB> B,
+__spirv_ArbitraryFloatLTINTEL(_spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B,
                               int32_t MB) noexcept;
 
 template <int WA, int WB>
 extern SYCL_EXTERNAL bool
-__spirv_ArbitraryFloatLEINTEL(ap_int<WA> A, int32_t MA, ap_int<WB> B,
+__spirv_ArbitraryFloatLEINTEL(_spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B,
                               int32_t MB) noexcept;
 
 template <int WA, int WB>
 extern SYCL_EXTERNAL bool
-__spirv_ArbitraryFloatEQINTEL(ap_int<WA> A, int32_t MA, ap_int<WB> B,
+__spirv_ArbitraryFloatEQINTEL(_spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B,
                               int32_t MB) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatRecipINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatRecipINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatRSqrtINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatRSqrtINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatCbrtINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatCbrtINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int WB, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatHypotINTEL(
-    ap_int<WA> A, int32_t MA, ap_int<WB> B, int32_t MB, int32_t Mout,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatHypotINTEL(
+    _spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B, int32_t MB, int32_t Mout,
     int32_t EnableSubnormals = 0, int32_t RoundingMode = 0,
     int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatSqrtINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatSqrtINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatLogINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatLogINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatLog2INTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatLog2INTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatLog10INTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatLog10INTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatLog1pINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatLog1pINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatExpINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatExpINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatExp2INTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatExp2INTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatExp10INTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatExp10INTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatExpm1INTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatExpm1INTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatSinINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatSinINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatCosINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatCosINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 // Result value contains both values of sine and cosine and so has the size of
 // 2 * Wout where Wout is equal to (1 + Eout + Mout).
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<2 * Wout> __spirv_ArbitraryFloatSinCosINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<2 * Wout> __spirv_ArbitraryFloatSinCosINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatSinPiINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatSinPiINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatCosPiINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatCosPiINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 // Result value contains both values of sine(A*pi) and cosine(A*pi) and so has
 // the size of 2 * Wout where Wout is equal to (1 + Eout + Mout).
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<2 * Wout> __spirv_ArbitraryFloatSinCosPiINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<2 * Wout> __spirv_ArbitraryFloatSinCosPiINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatASinINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatASinINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatASinPiINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatASinPiINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatACosINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatACosINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatACosPiINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatACosPiINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatATanINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatATanINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatATanPiINTEL(
-    ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatATanPiINTEL(
+    _spv::ap_int<WA> A, int32_t MA, int32_t Mout, int32_t EnableSubnormals = 0,
     int32_t RoundingMode = 0, int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int WB, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatATan2INTEL(
-    ap_int<WA> A, int32_t MA, ap_int<WB> B, int32_t MB, int32_t Mout,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatATan2INTEL(
+    _spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B, int32_t MB, int32_t Mout,
     int32_t EnableSubnormals = 0, int32_t RoundingMode = 0,
     int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int WB, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatPowINTEL(
-    ap_int<WA> A, int32_t MA, ap_int<WB> B, int32_t MB, int32_t Mout,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatPowINTEL(
+    _spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B, int32_t MB, int32_t Mout,
     int32_t EnableSubnormals = 0, int32_t RoundingMode = 0,
     int32_t RoundingAccuracy = 0) noexcept;
 
 template <int WA, int WB, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatPowRINTEL(
-    ap_int<WA> A, int32_t MA, ap_int<WB> B, int32_t MB, int32_t Mout,
+extern SYCL_EXTERNAL _spv::ap_int<Wout> __spirv_ArbitraryFloatPowRINTEL(
+    _spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B, int32_t MB, int32_t Mout,
     int32_t EnableSubnormals = 0, int32_t RoundingMode = 0,
     int32_t RoundingAccuracy = 0) noexcept;
 
@@ -561,8 +561,8 @@ extern SYCL_EXTERNAL ap_int<Wout> __spirv_ArbitraryFloatPowRINTEL(
 // point number and `B` is arbitrary precision integer, i.e. its width doesn't
 // depend on sum of exponent and mantissa.
 template <int WA, int WB, int Wout>
-extern SYCL_EXTERNAL ap_int<Wout>
-__spirv_ArbitraryFloatPowNINTEL(ap_int<WA> A, int32_t MA, ap_int<WB> B,
+extern SYCL_EXTERNAL _spv::ap_int<Wout>
+__spirv_ArbitraryFloatPowNINTEL(_spv::ap_int<WA> A, int32_t MA, _spv::ap_int<WB> B,
                                 int32_t Mout, int32_t EnableSubnormals = 0,
                                 int32_t RoundingMode = 0,
                                 int32_t RoundingAccuracy = 0) noexcept;
