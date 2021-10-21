@@ -923,6 +923,11 @@ namespace {
       // Never memcpy fields when we are adding poisoned paddings.
       if (CGF.getContext().getLangOpts().SanitizeAddressFieldPadding)
         return false;
+
+      // Never memcpy fields when it's hls
+      if (CGF.getTarget().getTriple().isXilinxFPGA()) 
+        return false;
+
       Qualifiers Qual = F->getType().getQualifiers();
       if (Qual.hasVolatile() || Qual.hasObjCLifetime())
         return false;

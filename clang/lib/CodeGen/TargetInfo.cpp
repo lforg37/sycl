@@ -10188,6 +10188,48 @@ public:
 private:
   void setCCs();
 };
+
+//===----------------------------------------------------------------------===//
+// FPGA ABI Implementation
+//===----------------------------------------------------------------------===//
+
+class FPGAABIInfo : public DefaultABIInfo {
+public:
+  FPGAABIInfo(CodeGen::CodeGenTypes &CGT)
+      : DefaultABIInfo(CGT) {}
+
+  ABIArgInfo classifyDirectOrExtendType(QualType T) const {
+    if (T->isVoidType())
+      return ABIArgInfo::getIgnore();
+
+    // Treat an enum type as its underlying type.
+    if (const EnumType *EnumTy = T->getAs<EnumType>())
+      T = EnumTy->getDecl()->getIntegerType();
+    
+    if (const auto *EIT = T->getAs<ExtIntType>())
+    if (EIT->getNumBits() >
+        getContext().getTypeSize(getContext().getTargetInfo().hasInt128Type()
+                                     ? getContext().Int128Ty
+                                     : getContext().LongLongTy))
+      return getNaturalAlignIndirect(T);
+
+    /*if (isPromotableIntegerTypeForABI(T))
+      return ABIArgInfo::getExtend(T);*/
+
+    return ABIArgInfo::getDirect(CGT.ConvertType(T), 0, nullptr, false);
+  }
+
+  void computeInfo(CGFunctionInfo &FI) const override {
+    auto T = FI.getReturnType();
+    if (!getCXXABI().classifyReturnType(FI))
+      FI.getReturnInfo() = classifyDirectOrExtendType(T);
+
+    for (auto &I : FI.arguments()) {
+      I.info = classifyArgumentType(I.type);
+    }
+  }
+};
+
 } // end anonymous namespace
 namespace {
 class SPIRTargetCodeGenInfo : public TargetCodeGenInfo {
@@ -10215,6 +10257,11 @@ namespace CodeGen {
 void computeSPIRKernelABIInfo(CodeGenModule &CGM, CGFunctionInfo &FI) {
   DefaultABIInfo SPIRABI(CGM.getTypes());
   SPIRABI.computeInfo(FI);
+}
+
+void computeFPGAInternalABIInfo(CodeGenModule &CGM, CGFunctionInfo &FI) {
+  FPGAABIInfo FPGAABI(CGM.getTypes());
+  FPGAABI.computeInfo(FI);
 }
 }
 }

@@ -117,6 +117,32 @@ static cl::opt<bool> SROAStrictInbounds("sroa-strict-inbounds", cl::init(false),
 
 namespace {
 
+bool isExtIntWrapper(Type *AllocaTy) {
+  LLVM_DEBUG(dbgs() << "Is ext int wrapper\n");
+  AllocaTy->dump();
+  if (AllocaTy->isStructTy()) {
+    auto *StructTy = cast<StructType>(AllocaTy);
+    if (StructTy->getNumElements() == 1) {
+      auto ret = StructTy->getElementType(0)->isIntegerTy();
+      LLVM_DEBUG(dbgs() << ret << "\n");
+      return ret;
+    }
+  }
+  LLVM_DEBUG(dbgs() << "0\n");
+  return false;
+}
+
+Type* getCandidateWideIntForType(Type* AllocaTy, const DataLayout &DL) {
+    if (isExtIntWrapper(AllocaTy)) {
+        auto* StructTy = cast<StructType>(AllocaTy);
+        auto* ret = StructTy->getElementType(0);
+        ret->dump();
+        return ret;
+    }
+    return Type::getIntNTy(AllocaTy->getContext(),
+                           DL.getTypeSizeInBits(AllocaTy).getFixedSize());
+}
+
 /// A custom IRBuilder inserter which prefixes all names, but only in
 /// Assert builds.
 class IRBuilderPrefixedInserter final : public IRBuilderDefaultInserter {
@@ -1727,7 +1753,8 @@ static Align getAdjustedAlignment(Instruction *I, uint64_t Offset) {
 static bool canConvertValue(const DataLayout &DL, Type *OldTy, Type *NewTy) {
   if (OldTy == NewTy)
     return true;
-
+  
+  LLVM_DEBUG(dbgs() << "Youhou4\n");
   // For integer types, we can't handle any bit-width differences. This would
   // break both vector conversions with extension and introduce endianness
   // issues when in conjunction with loads and stores.
@@ -1738,11 +1765,25 @@ static bool canConvertValue(const DataLayout &DL, Type *OldTy, Type *NewTy) {
     return false;
   }
 
-  if (DL.getTypeSizeInBits(NewTy).getFixedSize() !=
+  OldTy->dump();
+  NewTy->dump();
+
+  if (isExtIntWrapper(OldTy) && getCandidateWideIntForType(OldTy, DL) == NewTy)
+    return true;
+
+  if (isExtIntWrapper(NewTy) && getCandidateWideIntForType(NewTy, DL) == OldTy)
+    return true;
+
+  
+  LLVM_DEBUG(dbgs() << "Youhou5\n");
+
+   if (DL.getTypeSizeInBits(NewTy).getFixedSize() !=
       DL.getTypeSizeInBits(OldTy).getFixedSize())
     return false;
   if (!NewTy->isSingleValueType() || !OldTy->isSingleValueType())
     return false;
+  
+  LLVM_DEBUG(dbgs() << "Youhou6\n");
 
   // We can convert pointers to integers and vice-versa. Same for vectors
   // of pointers and integers.
@@ -1828,6 +1869,28 @@ static Value *convertValue(const DataLayout &DL, IRBuilderTy &IRB, Value *V,
       return IRB.CreateIntToPtr(IRB.CreatePtrToInt(V, DL.getIntPtrType(OldTy)),
                                 NewTy);
     }
+  }
+  if (isExtIntWrapper(OldTy) && NewTy->isIntegerTy()) {
+    OldTy->dump();
+    NewTy->dump();
+    Value* ExtractedVal = IRB.CreateExtractValue(V, {0});
+    Type* candidateTy = cast<IntegerType>(ExtractedVal->getType());
+    assert(candidateTy->getIntegerBitWidth() <= NewTy->getIntegerBitWidth() && "Error on type width");
+    return IRB.CreateZExtOrBitCast(ExtractedVal, NewTy);
+  }
+
+  if (isExtIntWrapper(NewTy) && OldTy->isIntegerTy()) {
+    OldTy->dump();
+    NewTy->dump();
+    auto* NTAlloc = IRB.CreateAlloca(NewTy);
+    Type* InsertTy = cast<IntegerType>(ExtractValueInst::getIndexedType(NewTy, {0})); 
+    assert(InsertTy->getIntegerBitWidth() <= OldTy->getIntegerBitWidth() && "Error on type width");
+    Value* Truncated = IRB.CreateTruncOrBitCast(V, InsertTy);
+    InsertTy->dump();
+    Truncated->getType()->dump();
+    NTAlloc->getType()->dump();
+    IRB.CreateInsertValue(NTAlloc, Truncated, {0});
+    return NTAlloc;
   }
 
   return IRB.CreateBitCast(V, NewTy);
@@ -2036,6 +2099,7 @@ static bool isIntegerWideningViableForSlice(const Slice &S,
                                             const DataLayout &DL,
                                             bool &WholeAllocaOp) {
   uint64_t Size = DL.getTypeStoreSize(AllocaTy).getFixedSize();
+  LLVM_DEBUG(dbgs() << "       SIZE :" << Size << "\n");
 
   uint64_t RelBegin = S.beginOffset() - AllocBeginOffset;
   uint64_t RelEnd = S.endOffset() - AllocBeginOffset;
@@ -2044,6 +2108,7 @@ static bool isIntegerWideningViableForSlice(const Slice &S,
   // the end of the alloca's type and into its padding.
   if (RelEnd > Size)
     return false;
+  LLVM_DEBUG(dbgs() << "Youhou8\n");
 
   Use *U = S.getUse();
 
@@ -2053,10 +2118,13 @@ static bool isIntegerWideningViableForSlice(const Slice &S,
     // We can't handle loads that extend past the allocated memory.
     if (DL.getTypeStoreSize(LI->getType()).getFixedSize() > Size)
       return false;
+      
+    LLVM_DEBUG(dbgs() << "YouhouLoad8\n");
     // So far, AllocaSliceRewriter does not support widening split slice tails
     // in rewriteIntegerLoad.
     if (S.beginOffset() < AllocBeginOffset)
       return false;
+    LLVM_DEBUG(dbgs() << "YouhouLoad9\n");
     // Note that we don't count vector loads or stores as whole-alloca
     // operations which enable integer widening because we would prefer to use
     // vector widening instead.
@@ -2065,6 +2133,7 @@ static bool isIntegerWideningViableForSlice(const Slice &S,
     if (IntegerType *ITy = dyn_cast<IntegerType>(LI->getType())) {
       if (ITy->getBitWidth() < DL.getTypeStoreSizeInBits(ITy).getFixedSize())
         return false;
+      LLVM_DEBUG(dbgs() << "YouhouLoad10\n");
     } else if (RelBegin != 0 || RelEnd != Size ||
                !canConvertValue(DL, AllocaTy, LI->getType())) {
       // Non-integer loads need to be convertible from the alloca type so that
@@ -2107,7 +2176,7 @@ static bool isIntegerWideningViableForSlice(const Slice &S,
   } else {
     return false;
   }
-
+  LLVM_DEBUG(dbgs() << "Youhou10\n");
   return true;
 }
 
@@ -2119,22 +2188,36 @@ static bool isIntegerWideningViableForSlice(const Slice &S,
 /// promote the resulting alloca.
 static bool isIntegerWideningViable(Partition &P, Type *AllocaTy,
                                     const DataLayout &DL) {
+  if (isExtIntWrapper(AllocaTy)) return true;
+  AllocaTy->dump();
   uint64_t SizeInBits = DL.getTypeSizeInBits(AllocaTy).getFixedSize();
   // Don't create integer types larger than the maximum bitwidth.
   if (SizeInBits > IntegerType::MAX_INT_BITS)
     return false;
 
+  LLVM_DEBUG(dbgs() << "Youhou1\n");
+  LLVM_DEBUG(dbgs() << "   NotFixedSize: " << DL.getTypeSizeInBits(AllocaTy) <<"\n");
+  LLVM_DEBUG(dbgs() << "   SIZEInBits: " << SizeInBits <<"\n");
+
   // Don't try to handle allocas with bit-padding.
   if (SizeInBits != DL.getTypeStoreSizeInBits(AllocaTy).getFixedSize())
     return false;
 
+  
+  LLVM_DEBUG(dbgs() << "Youhou2\n");
+
   // We need to ensure that an integer type with the appropriate bitwidth can
   // be converted to the alloca type, whatever that is. We don't want to force
   // the alloca itself to have an integer type if there is a more suitable one.
-  Type *IntTy = Type::getIntNTy(AllocaTy->getContext(), SizeInBits);
+  Type *IntTy = getCandidateWideIntForType(AllocaTy, DL);
+  //Type *IntTy = Type::getIntNTy(AllocaTy->getContext(), SizeInBits);
+  IntTy->dump();
   if (!canConvertValue(DL, AllocaTy, IntTy) ||
       !canConvertValue(DL, IntTy, AllocaTy))
     return false;
+
+
+  LLVM_DEBUG(dbgs() << "Youhou3\n");
 
   // While examining uses, we ensure that the alloca has a covering load or
   // store. We don't want to widen the integer operations only to fail to
@@ -2364,12 +2447,15 @@ public:
         NewAllocaBeginOffset(NewAllocaBeginOffset),
         NewAllocaEndOffset(NewAllocaEndOffset),
         NewAllocaTy(NewAI.getAllocatedType()),
-        IntTy(
-            IsIntegerPromotable
-                ? Type::getIntNTy(NewAI.getContext(),
-                                  DL.getTypeSizeInBits(NewAI.getAllocatedType())
-                                      .getFixedSize())
-                : nullptr),
+        IntTy(IsIntegerPromotable
+                  ? (isExtIntWrapper(NewAI.getAllocatedType())
+                         ? cast<IntegerType>(getCandidateWideIntForType(
+                               NewAI.getAllocatedType(), DL))
+                         : Type::getIntNTy(
+                               NewAI.getContext(),
+                               DL.getTypeSizeInBits(NewAI.getAllocatedType())
+                                   .getFixedSize()))
+                  : nullptr),
         VecTy(PromotableVecTy),
         ElementTy(VecTy ? VecTy->getElementType() : nullptr),
         ElementSize(VecTy ? DL.getTypeSizeInBits(ElementTy).getFixedSize() / 8
@@ -2413,6 +2499,7 @@ public:
         Twine(NewAI.getName()) + "." + Twine(BeginOffset) + ".");
 
     CanSROA &= visit(cast<Instruction>(OldUse->getUser()));
+    LLVM_DEBUG(dbgs() << " CanSROA:" << CanSROA << "\n");
     if (VecTy || IntTy)
       assert(CanSROA);
     return CanSROA;
@@ -3367,6 +3454,7 @@ private:
     /// \param Agg The aggregate value being built up or stored, depending on
     /// whether this is splitting a load or a store respectively.
     void emitSplitOps(Type *Ty, Value *&Agg, const Twine &Name) {
+      LLVM_DEBUG(dbgs() << "emitSplitOps\n");
       if (Ty->isSingleValueType()) {
         unsigned Offset = DL.getIndexedOffsetInType(BaseTy, GEPIndices);
         return static_cast<Derived *>(this)->emitFunc(
@@ -3419,6 +3507,9 @@ private:
     /// Emit a leaf load of a single value. This is called at the leaves of the
     /// recursive emission to actually load values.
     void emitFunc(Type *Ty, Value *&Agg, Align Alignment, const Twine &Name) {
+        LLVM_DEBUG(dbgs() << "emitfunc\n");
+        Ty->dump();
+        Agg->getType()->dump();
       assert(Ty->isSingleValueType());
       // Load the single value and insert it using the indices.
       Value *GEP =
@@ -3438,10 +3529,13 @@ private:
   };
 
   bool visitLoadInst(LoadInst &LI) {
+    LLVM_DEBUG(dbgs() << "Visit LI\n");
+    LLVM_DEBUG(dbgs() << "    LI is simple "<< LI.isSimple() << "\n");
+    LI.getType()->dump();
     assert(LI.getPointerOperand() == *U);
     if (!LI.isSimple() || LI.getType()->isSingleValueType())
       return false;
-
+    LLVM_DEBUG(dbgs() << "Visit LI2\n");
     // We have an aggregate being loaded, split it apart.
     LLVM_DEBUG(dbgs() << "    original: " << LI << "\n");
     AAMDNodes AATags;
@@ -4316,13 +4410,15 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
       findCommonType(P.begin(), P.end(), P.endOffset());
   // Do all uses operate on the same type?
   if (CommonUseTy.first)
-    if (DL.getTypeAllocSize(CommonUseTy.first).getFixedSize() >= P.size())
+    if (DL.getTypeAllocSize(CommonUseTy.first).getFixedSize() >= P.size()) {
       SliceTy = CommonUseTy.first;
+    }
   // If not, can we find an appropriate subtype in the original allocated type?
   if (!SliceTy)
     if (Type *TypePartitionTy = getTypePartition(DL, AI.getAllocatedType(),
-                                                 P.beginOffset(), P.size()))
+                                                 P.beginOffset(), P.size())) {
       SliceTy = TypePartitionTy;
+    }
   // If still not, can we use the largest bitwidth integer type used?
   if (!SliceTy && CommonUseTy.second)
     if (DL.getTypeAllocSize(CommonUseTy.second).getFixedSize() >= P.size())
@@ -4336,12 +4432,15 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
   assert(DL.getTypeAllocSize(SliceTy).getFixedSize() >= P.size());
 
   bool IsIntegerPromotable = isIntegerWideningViable(P, SliceTy, DL);
+  
+  LLVM_DEBUG(dbgs() << "Youhou\n");
+  SliceTy->dump();
+  LLVM_DEBUG(dbgs() << "       IsIntegerPromotable :" << IsIntegerPromotable << "\n");
 
   VectorType *VecTy =
       IsIntegerPromotable ? nullptr : isVectorPromotionViable(P, DL);
   if (VecTy)
     SliceTy = VecTy;
-
   // Check for the case where we're going to rewrite to a new alloca of the
   // exact same type as the original, and with the same access offsets. In that
   // case, re-use the existing alloca, but still run through the rewriter to
@@ -4364,6 +4463,8 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
         SliceTy, AI.getType()->getAddressSpace(), nullptr,
         IsUnconstrained ? DL.getPrefTypeAlign(SliceTy) : Alignment,
         AI.getName() + ".sroa." + Twine(P.begin() - AS.begin()), &AI);
+    LLVM_DEBUG(dbgs() << "ALLOCA TYPE\n");
+    SliceTy->dump();
     // Copy the old AI debug location over to the new one.
     NewAI->setDebugLoc(AI.getDebugLoc());
     ++NumNewAllocas;
@@ -4389,10 +4490,13 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
     Promotable &= Rewriter.visit(S);
     ++NumUses;
   }
+  LLVM_DEBUG(dbgs() << "Promotable 0:" << Promotable << "\n");
   for (Slice &S : P) {
     Promotable &= Rewriter.visit(&S);
     ++NumUses;
   }
+  
+  LLVM_DEBUG(dbgs() << "Promotable 1:" << Promotable << "\n");
 
   NumAllocaPartitionUses += NumUses;
   MaxUsesPerAllocaPartition.updateMax(NumUses);
@@ -4406,6 +4510,9 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
       SelectUsers.clear();
       break;
     }
+  
+  
+  LLVM_DEBUG(dbgs() << "Promotable 2:" << Promotable << "\n");
 
   for (SelectInst *Sel : SelectUsers)
     if (!isSafeSelectToSpeculate(*Sel)) {
@@ -4414,6 +4521,9 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
       SelectUsers.clear();
       break;
     }
+
+  
+  LLVM_DEBUG(dbgs() << "Promotable 3:" << Promotable << "\n");
 
   if (Promotable) {
     for (Use *U : AS.getDeadUsesIfPromotable()) {
@@ -4784,8 +4894,9 @@ PreservedAnalyses SROA::runImpl(Function &F, DominatorTree &RunDT,
        I != E; ++I) {
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
       if (isa<ScalableVectorType>(AI->getAllocatedType())) {
-        if (isAllocaPromotable(AI))
+        if (isAllocaPromotable(AI)) {
           PromotableAllocas.push_back(AI);
+        }
       } else {
         Worklist.insert(AI);
       }

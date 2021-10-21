@@ -731,6 +731,7 @@ CodeGenTypes::arrangeCall(const CGFunctionInfo &signature,
 namespace clang {
 namespace CodeGen {
 void computeSPIRKernelABIInfo(CodeGenModule &CGM, CGFunctionInfo &FI);
+void computeFPGAInternalABIInfo(CodeGenModule &CGM, CGFunctionInfo &FI);
 }
 }
 
@@ -783,6 +784,10 @@ CodeGenTypes::arrangeLLVMFunctionInfo(CanQualType resultType,
     computeSPIRKernelABIInfo(CGM, *FI);
   } else if (info.getCC() == CC_Swift || info.getCC() == CC_SwiftAsync) {
     swiftcall::computeABIInfo(CGM, *FI);
+  } else if (false && CGM.getTriple().isXilinxFPGA()) {
+    // Internal functions for FPGA target can pass wider structure
+    // in registers
+    computeFPGAInternalABIInfo(CGM, *FI);
   } else {
     getABIInfo().computeInfo(*FI);
   }

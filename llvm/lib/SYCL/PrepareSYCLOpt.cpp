@@ -95,8 +95,6 @@ struct PrepareSYCLOpt : public ModulePass {
     }
   }
 
-  
-
   /// This will change array partition such that after the O3 pipeline it
   /// matched very closely what v++ generates.
   /// This will change the type of the alloca referenced by the array partition
@@ -226,6 +224,7 @@ struct PrepareSYCLOpt : public ModulePass {
   bool runOnModule(Module &M) override {
     // When using the HLS flow instead of SPIR default
     bool SyclHLSFlow = Triple(M.getTargetTriple()).isXilinxHLS();
+    
     unwrapFPGAProperties(M);
     turnNonKernelsIntoPrivate(M);
     if (SyclHLSFlow) {

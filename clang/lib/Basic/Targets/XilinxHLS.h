@@ -49,6 +49,7 @@ class LLVM_LIBRARY_VISIBILITY XilinxHLSTargetInfo : public TargetInfo {
 public:
   XilinxHLSTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
       : TargetInfo(Triple) {
+    RegParmMax = 6;
     TLSSupported = false;
     VLASupported = false;
     LongWidth = LongAlign = 64;

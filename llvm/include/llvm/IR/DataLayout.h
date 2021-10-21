@@ -120,6 +120,7 @@ public:
 private:
   /// Defaults to false.
   bool BigEndian;
+  bool AllIntLegal;
 
   unsigned AllocaAddrSpace;
   MaybeAlign StackNaturalAlign;
@@ -261,6 +262,7 @@ public:
   ///
   /// The width is specified in bits.
   bool isLegalInteger(uint64_t Width) const {
+    if (AllIntLegal) return true;
     return llvm::is_contained(LegalIntWidths, Width);
   }
 

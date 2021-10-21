@@ -530,7 +530,12 @@ DataLayout::DataLayout(const Module *M) {
   init(M);
 }
 
-void DataLayout::init(const Module *M) { *this = M->getDataLayout(); }
+void DataLayout::init(const Module *M) { 
+    *this = M->getDataLayout();
+    if (llvm::Triple{M->getTargetTriple()}.isXilinxFPGA()) {
+        AllIntLegal = true;
+    }
+}
 
 bool DataLayout::operator==(const DataLayout &Other) const {
   bool Ret = BigEndian == Other.BigEndian &&
