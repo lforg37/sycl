@@ -21,11 +21,255 @@
 #define SYCL_XILINX_FPGA_PARTITION_ARRAY_HPP
 
 #include "CL/sycl/detail/defines.hpp"
+//#include "llvm/CodeGen/ISDOpcodes.h"
 
 #include <array>
 #include <cstddef>
+#include <initializer_list>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 
+namespace sycl::ext::xilinx {
+
+namespace Repartition {
+struct NoScatter {
+private:
+  template <size_t DimIdx, size_t ProdUntilNow, size_t totalDim, size_t HeadDim,
+            size_t... DimSize>
+  static constexpr size_t getOffset(std::array<size_t, totalDim> &index) {
+    constexpr size_t CurProd = ProdUntilNow / HeadDim;
+    size_t CurDimOffset = CurProd * index[DimIdx];
+    if constexpr (sizeof...(DimSize) == 0) {
+      return CurDimOffset;
+    } else {
+      return CurDimOffset +
+             getOffset<DimIdx + 1, CurProd, totalDim, DimSize...>(index);
+    }
+  }
+
+public:
+  template <size_t... DimSize>
+  static constexpr size_t get_nb_banks(std::index_sequence<DimSize...>) {
+    return 1;
+  }
+
+  template <size_t... DimSize>
+  static constexpr size_t get_bank_size(std::index_sequence<DimSize...>) {
+    return (DimSize * ...);
+  }
+
+  template <size_t... DimSize>
+  static constexpr std::tuple<size_t, size_t>
+  get_map_for(std::index_sequence<DimSize...> dim,
+              std::array<size_t, sizeof...(DimSize)> index) {
+    constexpr size_t bank_idx = 0;
+    size_t offset =
+        getOffset<0, get_bank_size(dim), sizeof...(DimSize), DimSize...>(index);
+    return std::make_tuple(bank_idx, offset);
+  }
+
+  template <size_t... DimSize>
+  static constexpr bool is_valid(std::index_sequence<DimSize...>) {
+    return (DimSize * ...) != 0;
+  }
+};
+
+struct Complete {
+private:
+  template <size_t DimIdx, size_t ProdUntilNow, size_t totalDim, size_t HeadDim,
+            size_t... DimSize>
+  static constexpr size_t getOffset(std::array<size_t, totalDim> &index) {
+    constexpr size_t CurProd = ProdUntilNow / HeadDim;
+    size_t CurDimOffset = CurProd * index[DimIdx];
+    if constexpr (sizeof...(DimSize) == 0) {
+      return CurDimOffset;
+    } else {
+      return CurDimOffset +
+             getOffset<DimIdx + 1, CurProd, totalDim, DimSize...>(index);
+    }
+  }
+
+public:
+  template <size_t... DimSize>
+  static constexpr size_t get_nb_banks(std::index_sequence<DimSize...>) {
+    return (DimSize * ...);
+  }
+
+  template <size_t... DimSize>
+  static constexpr size_t get_bank_size(std::index_sequence<DimSize...>) {
+    return 1;
+  }
+
+  template <size_t... DimSize>
+  static constexpr std::tuple<size_t, size_t>
+  get_map_for(std::index_sequence<DimSize...> dim,
+              std::array<size_t, sizeof...(DimSize)> index) {
+    size_t bank_idx =
+        getOffset<0, get_bank_size(dim), sizeof...(DimSize), DimSize...>(index);
+    ;
+    constexpr size_t offset = 0;
+
+    return std::make_tuple(bank_idx, offset);
+  }
+
+  template <size_t... DimSize>
+  static constexpr bool is_valid(std::index_sequence<DimSize...>) {
+    return (DimSize * ...) != 0;
+  }
+};
+} // namespace Repartition
+
+template <typename ElementType, typename RepartitionPolicy, size_t... Dims>
+class PartitionnedArray {
+public:
+  using dim_t = std::index_sequence<Dims...>;
+  static constexpr size_t NbDims = sizeof...(Dims);
+  static_assert(NbDims > 0, "PartitionnedArray needs at least one dimension");
+  static constexpr size_t NBBanks = RepartitionPolicy::get_nb_banks(dim_t{});
+  static constexpr size_t BankSize = RepartitionPolicy::get_bank_size(dim_t{});
+
+private:
+  using idx_t = std::array<size_t, NbDims>;
+
+  template <typename T, typename Seq> struct expander;
+
+  template <typename T, std::size_t... Is>
+  struct expander<T, std::index_sequence<Is...>> {
+    template <typename E, std::size_t> using elem = E;
+
+    using type = std::tuple<elem<T, Is>...>;
+  };
+  template <size_t CurDim, bool is_const> class AccessProxy {
+  private:
+    using RefHolderType =
+        typename expander<size_t, std::make_index_sequence<CurDim>>::type;
+    using PartitionnedArrayRef = std::conditional_t<is_const, PartitionnedArray const &,PartitionnedArray &>;
+    PartitionnedArrayRef Accessed;
+    RefHolderType DimIDX;
+    static constexpr bool IsLast = CurDim == NbDims - 1;
+
+    using SuccessorType = std::conditional_t<
+        IsLast, 
+        std::conditional_t<
+            is_const, 
+                ElementType, 
+                ElementType &>,
+        AccessProxy<CurDim + 1, is_const>>;
+
+  public:
+    AccessProxy(PartitionnedArrayRef _Accessed, RefHolderType _DimIDX)
+        : Accessed{_Accessed}, DimIDX{_DimIDX} {}
+
+    constexpr SuccessorType operator[](size_t Idx) {
+      auto IdxSeq = std::tuple_cat(DimIDX, std::make_tuple(Idx));
+      if constexpr (IsLast) {
+        constexpr auto GetArray = [](auto&& ... x){ return std::array{std::forward<decltype(x)>(x) ... }; };
+        return Accessed.get(std::apply(GetArray, IdxSeq));
+      } else {
+        return SuccessorType{Accessed, IdxSeq};
+      }
+    }
+  };
+
+  template <size_t DimIdx, size_t ProdUntilNow, size_t HeadDim,
+            size_t... DimSize>
+  static constexpr size_t getOffset(idx_t index) {
+    constexpr size_t CurProd = ProdUntilNow / HeadDim;
+    size_t CurDimOffset = CurProd * index[DimIdx];
+    if constexpr (sizeof...(DimSize) == 0) {
+      return CurDimOffset;
+    } else {
+      return CurDimOffset + getOffset<DimIdx + 1, CurProd, DimSize...>(index);
+    }
+  }
+
+  /// @brief Construct parallel_for equivalent loop recursively
+  ///
+  /// @tparam CurDimIdx Which dimension of the iteration space (starting from 0)
+  ///
+  /// @param ElementWiseOp The kernel that should be applied to each element
+  /// @param OuterLoopIterIdx array storing loop idx
+  ///
+  /// Build one loop of depth CurDimIDX for the loop nest corresponding to
+  /// IterDomain
+  template <int CurDimIdx>
+  inline void build_loop_nest_rec(auto ElementWiseOp, idx_t &OuterLoopIterIdx) {
+    size_t &CurDimIter = OuterLoopIterIdx[CurDimIdx];
+    constexpr std::array<size_t, sizeof...(Dims)> IterDomain = {Dims...};
+    for (CurDimIter = 0; CurDimIter < IterDomain[CurDimIdx]; CurDimIter++) {
+      if constexpr (CurDimIdx + 1 >= NbDims) {
+        static_assert(CurDimIdx == NbDims - 1);
+        // innermost loop : perform the call
+        ElementWiseOp(OuterLoopIterIdx);
+      } else {
+        // Extend the iteration index tuple and generate the next loop level
+        build_loop_nest_rec<CurDimIdx + 1>(ElementWiseOp, OuterLoopIterIdx);
+      }
+    }
+  }
+
+  inline void apply_on_all_elem(auto ElementWiseOp) {
+    idx_t idx;
+    build_loop_nest_rec<0>(ElementWiseOp, idx);
+  }
+  using bank = std::array<ElementType, BankSize>;
+  using bank_collection =
+      typename expander<bank, std::make_index_sequence<NBBanks>>::type;
+
+  bank_collection banks;
+
+  template <size_t stage>
+  constexpr ElementType const &get_elem_req(size_t bank_id, size_t offset) const {
+    if constexpr (stage == NBBanks - 1) {
+      return std::get<stage>(banks)[offset];
+    } else {
+      return (bank_id == stage) ? std::get<stage>(banks)[offset]
+                                : get_elem_req<stage + 1>(bank_id, offset);
+    }
+  }
+
+  constexpr ElementType const &get_elem(size_t bank_id, size_t offset) const {
+    return get_elem_req<0>(bank_id, offset);
+  }
+
+  constexpr ElementType &get_elem(size_t bank_id, size_t offset) {
+    return const_cast<ElementType &>(
+        static_cast<PartitionnedArray const &>(*this).get_elem_req<0>(bank_id,
+                                                                      offset));
+  }
+
+public:
+  constexpr ElementType const & get(idx_t index) const {
+    auto [bank_id, offset] = RepartitionPolicy::get_map_for(dim_t{}, index);
+    return get_elem(bank_id, offset);
+  }
+
+  constexpr ElementType &get(idx_t index) {
+    return const_cast<ElementType &>(
+        static_cast<PartitionnedArray const &>(*this).get(index));
+  }
+
+  constexpr PartitionnedArray(std::initializer_list<ElementType> initList) {
+    static_assert(RepartitionPolicy::is_valid(dim_t{}));
+    auto iter = initList.begin();
+    apply_on_all_elem([&](idx_t idx) {
+      auto [bank_id, offset] = RepartitionPolicy::get_map_for(dim_t{}, idx);
+      auto in_offset = getOffset<0, (Dims * ...), Dims...>(idx);
+      get_elem(bank_id, offset) = *iter++;
+    });
+  }
+
+  constexpr auto operator[](size_t value) {
+      return AccessProxy<0, false>(*this, {})[value];
+  }
+
+  constexpr auto operator[](size_t value) const {
+      return AccessProxy<0, true>(*this, {})[value];
+  }
+};
+} // namespace sycl::ext::xilinx
+#if 0
 __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl::ext::xilinx {
 
@@ -266,3 +510,4 @@ struct partition_array {
 }
 
 #endif// SYCL_XILINX_FPGA_PARTITION_ARRAY_HPP
+#endif
