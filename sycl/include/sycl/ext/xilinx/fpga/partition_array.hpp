@@ -30,8 +30,10 @@
 #include <type_traits>
 #include <utility>
 
-namespace sycl::ext::xilinx {
 
+__SYCL_INLINE_NAMESPACE(cl) {
+namespace sycl::ext::xilinx {
+#if 0
 namespace Repartition {
 struct NoScatter {
 private:
@@ -269,8 +271,7 @@ public:
   }
 };
 } // namespace sycl::ext::xilinx
-#if 0
-__SYCL_INLINE_NAMESPACE(cl) {
+
 namespace sycl::ext::xilinx {
 
 /** Kind of array partition
@@ -476,7 +477,7 @@ struct partition_array {
             // Only use this constructor for a real element-oriented
             // initializer_list we can assign, not for the case
             // partition_array<> a = { some_other_array }
-            typename = sycl::detail::enable_if_t<std::is_convertible<SourceBasicType,
+            typename = std::enable_if_t<std::is_convertible<SourceBasicType,
                                                             ValueType>::value>>
   constexpr partition_array(std::initializer_list<SourceBasicType> l)
     : partition_array { } {
@@ -504,10 +505,10 @@ struct partition_array {
     return partition_type;
   }
 };
-
-} // namespace cl::sycl::ext::xilinx
-
+#endif
+} // namespace sycl::ext::xilinx
 }
 
+
 #endif// SYCL_XILINX_FPGA_PARTITION_ARRAY_HPP
-#endif
+
