@@ -47,7 +47,7 @@ namespace detail {
 
 using ContextImplPtr = std::shared_ptr<cl::sycl::detail::context_impl>;
 
-static constexpr int DbgProgMgr = 0;
+static constexpr int DbgProgMgr = 1;
 
 enum BuildState { BS_InProgress, BS_Done, BS_Failed };
 
@@ -1049,13 +1049,14 @@ static void setupEnvironmentForKernels(RTDeviceBinaryImage *Img) {
 
 void ProgramManager::addImages(pi_device_binaries DeviceBinary) {
   std::lock_guard<std::mutex> Guard(Sync::getGlobalLock());
-
+  
   for (int I = 0; I < DeviceBinary->NumDeviceBinaries; I++) {
     pi_device_binary RawImg = &(DeviceBinary->DeviceBinaries[I]);
     OSModuleHandle M = OSUtil::getOSModuleHandle(RawImg);
     const _pi_offload_entry EntriesB = RawImg->EntriesBegin;
     const _pi_offload_entry EntriesE = RawImg->EntriesEnd;
     auto Img = make_unique_ptr<RTDeviceBinaryImage>(RawImg, M);
+    setupEnvironmentForKernels(Img.get());
 
     // Fill the kernel argument mask map
     const pi::DeviceBinaryImage::PropertyRange &KPOIRange =
@@ -1111,7 +1112,6 @@ void ProgramManager::addImages(pi_device_binaries DeviceBinary) {
     if (KSId == 0)
       KSId = getNextKernelSetId();
 
-    setupEnvironmentForKernels(Img.get());
     auto &Imgs = m_DeviceImages[KSId];
     if (!Imgs)
       Imgs.reset(new std::vector<RTDeviceBinaryImageUPtr>());
