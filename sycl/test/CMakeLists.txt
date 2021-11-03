@@ -77,6 +77,17 @@ add_lit_testsuite(check-sycl-xocc-j2 "Running the SYCL regression tests for sycl
   )
 set_target_properties(check-sycl-xocc-j2 PROPERTIES FOLDER "SYCL tests")
 
+add_lit_testsuite(check-sycl-xocc-j1 "Running the SYCL regression tests for sycl-xocc in j1"
+  ${CMAKE_CURRENT_BINARY_DIR}/on-device "-j 1"
+  ARGS ${RT_TEST_ARGS}
+  PARAMS "XOCC=only"
+  DEPENDS ${SYCL_TEST_DEPS}
+  EXCLUDE_FROM_CHECK_ALL
+  )
+set_target_properties(check-sycl-xocc-j1 PROPERTIES FOLDER "SYCL tests")
+
+
+
 add_lit_testsuite(check-sycl-xocc-all-jmax "Running the SYCL regression tests for SYCL on v++"
   ${CMAKE_CURRENT_BINARY_DIR}/on-device
   ARGS ${RT_TEST_ARGS}
