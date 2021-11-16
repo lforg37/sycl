@@ -199,9 +199,9 @@ struct VXXIRDowngrader : public ModulePass {
   }
 
   /// Remove Freeze instruction because v++ can't deal with them.
-  /// FIXME: This is not a safe transformation but since LLVM survived with bugs
-  /// caused by absence of freeze for many years, so I guess it is good enough
-  /// for a prototype.
+  /// This is not a safe transformation but since llvm survived with bugs cause
+  /// by absence of freeze for many years, so i guess its its good enough for a
+  /// prototype
   void removeFreezeInst(Module &M) {
     SmallVector<Instruction*, 16> ToRemove;
     for (auto& F : M.functions())
@@ -366,8 +366,7 @@ struct VXXIRDowngrader : public ModulePass {
     resetByVal(M);
     removeAttributes(M, {Attribute::WillReturn, Attribute::NoFree,
                          Attribute::ImmArg, Attribute::NoSync,
-                         Attribute::MustProgress, Attribute::NoUndef,
-                         Attribute::StructRet});
+                         Attribute::MustProgress, Attribute::NoUndef});
     removeAnnotations(M);
     renameBasicBlocks(M);
     removeFreezeInst(M);
