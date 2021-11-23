@@ -1,0 +1,38 @@
+name: Run tests
+
+concurrency: sycl-ci-sources-volume
+
+on:
+  pull_request:
+    branches:
+      - ci_test
+
+env: 
+  SYCL_VOLUME_NAME: sycl-ci-sources-${{ github.run_id }}-${{ github.run_attempt }}
+  SYCL_TEST_CONTAINER_NAME: sycl-ci-runtest-${{ github.run_id }}-${{ github.run_attempt }}
+
+jobs:
+  build:
+    runs-on: sycl-vxx-env
+
+    steps:
+    - name: Init git repo
+      run: docker run --rm --volume ${SYCL_VOLUME_NAME}:/git alpine/git init 
+    - name: Add remote
+      run: docker run --rm --volume ${SYCL_VOLUME_NAME}:/git alpine/git remote add origin ${{ github.server_url }}/${{ github.repository }}.git
+    - name: Fetch repository code
+      run: docker run --rm --volume ${SYCL_VOLUME_NAME}:/git alpine/git fetch --depth=1 origin ${{ github.head_ref }}:testing
+    - name: Checkout code
+      run: docker run --rm --volume ${SYCL_VOLUME_NAME}:/git alpine/git checkout testing 
+    - name: Configure build
+      run: docker run --rm --volume ${SYCL_VOLUME_NAME}:/sycl_ci_sources sycl-vxx-build python3 /sycl_ci_sources/buildbot/configure.py --no-werror
+    - name: Build compiler
+      run: docker run --rm --volume ${SYCL_VOLUME_NAME}:/sycl_ci_sources sycl-vxx-build python3 /sycl_ci_sources/buildbot/compile.py
+    - name: Run tests
+      id: tests
+      run: docker run -e SYCL_VXX_SERIALIZE_VITIS_COMP=True --volume ${SYCL_VOLUME_NAME}:/sycl_ci_sources --name ${SYCL_TEST_CONTAINER_NAME} sycl-vxx-runenv cmake --build /sycl_ci_sources/build --target check-sycl-xocc-j1
+    - name: Clean test container
+      run: docker rm --force ${SYCL_TEST_CONTAINER_NAME}
+    - name: Clean volume
+      run: docker volume rm -f ${SYCL_VOLUME_NAME}
+

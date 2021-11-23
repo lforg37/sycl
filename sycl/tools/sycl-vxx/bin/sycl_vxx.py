@@ -305,14 +305,21 @@ class CompilationDriver:
         # Compilation commands are generated in main process to ensure
         # they are printed on main process stdout if command dump is set
         compile_commands = map(
-            self._get_compile_kernel_cmd_out, self.kernel_properties["kernels"])
-        p = Pool()
-        try:
-            future = p.starmap_async(self._compile_kernel, compile_commands)
-            self.compiled_kernels = list(future.get())
-        except KeyboardInterrupt:
-            p.terminate()
-            raise KeyboardInterrupt
+            self._get_compile_kernel_cmd_out,
+            self.kernel_properties["kernels"])
+        if environ.get("SYCL_VXX_SERIALIZE_VITIS_COMP") is None:
+            p = Pool()
+            try:
+                future = p.starmap_async(
+                    self._compile_kernel,
+                    compile_commands)
+                self.compiled_kernels = list(future.get())
+            except KeyboardInterrupt:
+                p.terminate()
+                raise KeyboardInterrupt
+        else:
+            for command in compile_commands:
+                subprocess.run(command, check_output=True)
 
     def drive_compilation(self):
         if self.hls_flow and (self.vitis_mode == "sw_emu"):
