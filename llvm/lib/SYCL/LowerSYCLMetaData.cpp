@@ -208,7 +208,7 @@ public:
   /// @brief Add HLS-compatible pipeline annotation to surrounding loop
   ///
   /// @param CS Payload of the original annotation
-  void lowerUnrollDecoration(llvm::CallBase &CB, llvm::ConstantStruct *Payload) {
+  void lowerUnrollDecoration(llvm::CallBase &CB, llvm::Constant *Payload) {
     auto *F = CB.getCaller();
 
     // Metadata payload is unroll factor (first argument) and boolean indicating 
@@ -223,7 +223,6 @@ public:
             ->getZExtValue();
 
     LoopInfo LI{DominatorTree{*F}};
-
     auto *Parent = CB.getParent();
     auto *EnclosingLoop = LI.getLoopFor(Parent);
     assert(EnclosingLoop != nullptr &&
@@ -255,16 +254,25 @@ public:
     annotateLoop(EnclosingLoop, Annot);
   }
 
-  void lowerArrayPartition(llvm::Value *V) {
-    auto *F = dyn_cast<Function>(V);
-    if (!F)
-      return;
+  void lowerArrayPartition(llvm::ConstantStruct *CS) {
+    auto *F =
+      dyn_cast<Function>(getUnderlyingObject(CS->getAggregateElement(0u)));
+
+    auto *CSArgs = cast<Constant>(
+        cast<GlobalVariable>(getUnderlyingObject(CS->getAggregateElement(4)))
+            ->getOperand(0));
+    auto *Type =
+        cast<ConstantInt>(getUnderlyingObject(CSArgs->getAggregateElement(0u)));
+    auto *Factor =
+        cast<ConstantInt>(getUnderlyingObject(CSArgs->getAggregateElement(1u)));
+    auto *Dimension =
+        cast<ConstantInt>(getUnderlyingObject(CSArgs->getAggregateElement(2u)));
 
     HasChanged = true;
     Function *SideEffect = Intrinsic::getDeclaration(&M, Intrinsic::sideeffect);
     OperandBundleDef OpBundle("xlx_array_partition",
-                              ArrayRef<Value *>{F->getArg(0), F->getArg(1),
-                                                F->getArg(2), F->getArg(3)});
+                              ArrayRef<Value *>{F->getArg(0), Type,
+                                                Factor, Dimension});
 
     Instruction *I = CallInst::Create(SideEffect, {}, {OpBundle});
     I->insertBefore(F->getEntryBlock().getTerminator());
@@ -327,7 +335,7 @@ public:
       if (AnnotKind == kindOf("xilinx_pipeline")) {
         lowerPipelineDecoration(CS);
       } else if (AnnotKind == kindOf("xilinx_partition_array")) {
-        lowerArrayPartition(getUnderlyingObject(CS->getAggregateElement(0u)));
+        lowerArrayPartition(CS);
       } else if (AnnotKind == kindOf("xilinx_dataflow")) {
         lowerDataflowDecoration(CS);
       }
@@ -341,11 +349,10 @@ public:
     bool processed = false;
     if (Kind == kindOf("xilinx_ddr_bank"))
         return;
-    auto* Payload = cast<ConstantStruct>(PayloadCst);
     if (AfterO3) { // Annotation that should wait after optimisation to be
                    // lowered
       if (Kind == kindOf("xilinx_unroll")) {
-        lowerUnrollDecoration(CB, Payload);
+        lowerUnrollDecoration(CB, PayloadCst);
         processed = true;
       }
     }

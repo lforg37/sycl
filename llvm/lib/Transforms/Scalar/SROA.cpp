@@ -115,6 +115,12 @@ STATISTIC(NumVectorized, "Number of vectorized aggregates");
 static cl::opt<bool> SROAStrictInbounds("sroa-strict-inbounds", cl::init(false),
                                         cl::Hidden);
 
+
+/// Hidden option to experiment with completely strict handling of inbounds
+/// GEPs.
+static cl::opt<bool> SROAVXXConservative("sroa-vxx-conservative", cl::init(false),
+                                        cl::Hidden);
+
 namespace {
 
 /// A custom IRBuilder inserter which prefixes all names, but only in
@@ -3646,6 +3652,35 @@ private:
   }
 };
 
+bool isValidSROAVXXStruct(StructType *ST, const DataLayout& DL) {
+  // Case of alias struct
+  if (ST->getNumElements() == 1 && ST->getElementType(0)->isStructTy()) {
+    return isValidSROAVXXStruct(cast<StructType>(ST->getElementType(0)), DL);
+  }
+  for (Type *T : ST->elements()) {
+    if (!T->isSingleValueType()) {
+      ST->dump();
+      T->dump();
+      return false;
+    }
+    if (T->isIntegerTy() && !DL.isLegalInteger(T->getIntegerBitWidth())) {
+      ST->dump();
+      T->dump();
+      return false;
+    }
+  }
+  ST->dump();
+  return true;
+}
+
+bool isAIValidForVXXSROA(AllocaInst *AI) {
+  if (StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
+    const DataLayout& DL = AI->getModule()->getDataLayout();
+    return isValidSROAVXXStruct(ST, DL);
+  }
+  return false;
+}
+
 } // end anonymous namespace
 
 /// Strip aggregate type wrapping.
@@ -4786,7 +4821,7 @@ PreservedAnalyses SROA::runImpl(Function &F, DominatorTree &RunDT,
       if (isa<ScalableVectorType>(AI->getAllocatedType())) {
         if (isAllocaPromotable(AI))
           PromotableAllocas.push_back(AI);
-      } else {
+      } else if (!SROAVXXConservative || isAIValidForVXXSROA(AI)) {
         Worklist.insert(AI);
       }
     }

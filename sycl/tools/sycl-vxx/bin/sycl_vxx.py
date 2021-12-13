@@ -144,9 +144,10 @@ class CompilationDriver:
                 "-flat-address-space=0", "-globaldce"
             ])
         opt_options.extend([
-            "-instcombine", "-domtree", "-argpromotion", "-deadargelim",
-            "-globalopt", "-domtree", "-inline", "-instcombine", "-domtree",
-            "-argpromotion", "-deadargelim",
+           "-domtree", "-argpromotion", "-deadargelim",
+            "-globalopt", "-domtree", "-inline", "-early-cse",
+            "-domtree", "-argpromotion", "-deadargelim",
+            "-sroa",
             "-inSPIRation", "-o", f"{self.prepared_bc}"
         ])
 

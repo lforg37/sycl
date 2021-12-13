@@ -64,7 +64,7 @@ __SYCL_ALWAYS_INLINE void unroll(T &&functor) {
                         UnrollType::checked)
   int annotationAnchor;
   (void)annotationAnchor;
-  std::forward<T>(functor)();
+  functor();
 }
 
 } // namespace ext::xilinx
