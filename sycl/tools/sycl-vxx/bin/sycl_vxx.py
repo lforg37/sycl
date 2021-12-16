@@ -144,8 +144,9 @@ class CompilationDriver:
                 "-flat-address-space=0", "-globaldce"
             ])
         opt_options.extend([
-            "-inSPIRation",
-            "-o", f"{self.prepared_bc}"
+            "--vectorize-loops=false", "--disable-loop-unrolling",
+            "--sroa-avoid-aggregates", "-O3", "-globaldce", "-globaldce",
+            "-inSPIRation", "-o", f"{self.prepared_bc}"
         ])
 
         opt = self.clang_path / "opt"
