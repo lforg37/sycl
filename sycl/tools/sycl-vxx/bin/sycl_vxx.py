@@ -233,7 +233,6 @@ class CompilationDriver:
             vxx, "--target", self.vitis_mode,
             "--advanced.param", "compiler.hlsDataflowStrictMode=off",
             "--platform", self.xilinx_platform,
-            "-O3",
             "--temp_dir", self.tmpdir / 'vxx_comp_tmp',
             "--log_dir", self.tmpdir / 'vxx_comp_log',
             "--report_dir", self.tmpdir / 'vxx_comp_report',
