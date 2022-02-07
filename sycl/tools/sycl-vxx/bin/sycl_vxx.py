@@ -277,6 +277,8 @@ class CompilationDriver:
         comp_config = environ.get('SYCL_VXX_COMP_CONFIG')
         kernel_output = self.tmpdir / f"{kernel['name']}.xo"
         command = [
+            # Containerize v++ process tree as it can be messy
+            "unshare", "--map-current-user", "--pid", "--mount-proc", "--kill-child",
             vxx, "--target", self.vitis_mode,
             "--advanced.param", "compiler.hlsDataflowStrictMode=off",
             "--platform", self.xilinx_platform,
@@ -309,6 +311,8 @@ class CompilationDriver:
         vpp = self.vitis_bin_dir / "v++"
         link_config = environ.get('SYCL_VXX_LINK_CONFIG')
         command = [
+            # Containerize v++ process tree as it can be messy
+            "unshare", "--map-current-user", "--pid", "--mount-proc", "--kill-child",
             vpp, "--target", self.vitis_mode,
             "--advanced.param", "compiler.hlsDataflowStrictMode=off",
             "--platform", self.xilinx_platform,
