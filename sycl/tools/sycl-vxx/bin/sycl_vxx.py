@@ -21,7 +21,7 @@ but could expand in the future to include optimization information for each
 kernel.
 """
 
-from argparse import ArgumentParser
+from argparse import ArgumentError, ArgumentParser
 import functools
 import json
 from multiprocessing import Pool
@@ -70,6 +70,15 @@ def subprocess_error_handler(msg: str):
                 except subprocess.CalledProcessError:
                     print(msg, file=sys.stderr)
                     self.ok = False
+        return decorated
+    return decorator
+
+def run_if_ok():
+    """ Function only runs if the internal ok state is true"""
+    def decorator(func):
+        def decorated(self, *args, **kwargs):
+            if self.ok:
+                return func(self, *args, **kwargs)
         return decorated
     return decorator
 
@@ -340,6 +349,7 @@ class VXXCompilationDriver(VitisCompilationDriver):
         if self.hls_flow and (self.vitis_mode == "sw_emu"):
             raise Exception("sw_emu is not compatible with the HLS flow")
 
+    @run_if_ok
     def _get_compile_kernel_cmd_out(self, kernel, inputs):
         """Create command to compile kernel"""
         vxx = self.vitis_bin_dir / "v++"
@@ -367,6 +377,7 @@ class VXXCompilationDriver(VitisCompilationDriver):
         self._dump_cmd(f"vxxcomp-{kernel['name']}", command)
         return (kernel_output, command)
 
+    @run_if_ok
     def _compile_kernel(self, outname, command):
         """Execute a kernel compilation command"""
         _run_in_isolated_proctree(command, check=True)
@@ -450,8 +461,47 @@ class VXXCompilationDriver(VitisCompilationDriver):
 
 class IPExportCompilationDriver(VitisCompilationDriver):
     def __init__(self, arguments):
-        """TODO WRITE HERE"""
         super().__init__(arguments, "vitis_hls")
+        self.target == arguments.target
+        self.clock_period = arguments.clock_period
+    
+    @run_if_ok
+    def _get_top_comp_name(self):
+        numKernels = len(self.kernel_properties["kernels"])
+        if numKernels != 1:
+            raise Exception(
+                f"{numKernels} top level components found, should be exactly one")
+        kernelname = self.kernel_properties["kernels"][0]['name']
+        return kernelname
+
+    @run_if_ok
+    def _create_hls_script(self, compname, inputs):
+        script = self.tmpdir / "run_hls.tcl"
+        out = self.tmpdir / f"{compname}.zip"
+        with script.open("w") as sf:
+            sf.writelines([
+                "open_project -reset proj",
+                f"add_files {inputs}",
+                f"set_top {compname}",
+                "open_solution -reset sol",
+                f"set_part {self.target}",
+                f"create_clock -period {self.clock_period} -name default"
+                "csynth_design"
+                f"export_design -format ip_catalog -output {out}"
+                ])
+        return script, out
+    
+    @subprocess_error_handler("Vitis HLS invocation failed")
+    def _run_vitis_hls(self, script):
+        cmd = (self.vitisexec.path, script)
+        self._dump_cmd("vitis-hls-invocation", cmd)
+        _run_in_isolated_proctree(cmd, check=True)
+
+    def _next_passes(self, inputs):
+        topcompname = self._get_top_comp_name()
+        script, final_comp = self._create_hls_script(topcompname, inputs)
+        self._run_vitis_hls(script)
+        return final_comp
 
 
 def parse_args(args=sys.argv[1:]):
@@ -478,9 +528,17 @@ def parse_args(args=sys.argv[1:]):
             type=Path)
     elif command == "ipexport":
         parser.add_argument(
-            "--target-part",
-            help="Part number for which the synthesis should be done",
+            "--target",
+            help="Part code for which the synthesis should be done",
             required=True)
+        # TODO delay the default to clang driver, make it required here 
+        parser.add_argument(
+            "--clock-period",
+            help="clock period description",
+            default="3ns"
+        )
+    else:
+        raise ArgumentError(message=f"Unknown command: {command}")
 
     parser.add_argument(
         "--clang_path",
@@ -504,7 +562,7 @@ def main():
     if command == "vxxcompile":
         cd = VXXCompilationDriver(args)
     else:
-        cd =
+        cd = IPExportCompilationDriver(args)
     return cd.drive_compilation()
 
 
