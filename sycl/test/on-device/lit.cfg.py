@@ -44,7 +44,7 @@ config.test_source_root = os.path.dirname(__file__)
 # test_exec_root: The root path where tests should be run.
 config.test_exec_root = os.path.join(config.sycl_obj_root, 'test')
 
-config.environment['SYCL_VXX_KEEP_CLUTTER'] = 'True'
+#config.environment['SYCL_VXX_KEEP_CLUTTER'] = 'True'
 config.environment['SYCL_VXX_PRINT_CMD'] = 'True'
 llvm_config.use_clang()
 
@@ -293,6 +293,7 @@ if xocc != "off":
         acc_run_substitute+= "timeout 3000 env "
     else:
         acc_run_substitute+= "timeout 3000 env "
+    acc_run_substitute += "unshare -pc --kill-child"
 
 config.substitutions.append( ('%ACC_RUN_PLACEHOLDER',  acc_run_substitute) )
 config.substitutions.append( ('%ACC_CHECK_PLACEHOLDER',  acc_check_substitute) )
