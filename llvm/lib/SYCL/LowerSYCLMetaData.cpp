@@ -464,8 +464,8 @@ public:
                       llvm::formatv("llvm.fpga.fifo.pop.{0}.{1}",
                                     Kernel->getName(), Offset));
                     auto *StoredValPtr = CB->getArgOperand(1);
-                    llvm::SmallVector<Value*, 2> Args{WrittenVal, ReplacementInst};
-                    NewInst = llvm::CallInst::Create(WriteType, FifoWrite, Args);
+                    /*llvm::SmallVector<Value*, 2> Args{WrittenVal, ReplacementInst};
+                    NewInst = llvm::CallInst::Create(ReadType, FifoRead, Args);*/
                 }
               }
             }
@@ -525,11 +525,10 @@ public:
       auto *NewKernel = Function::Create(NewKernelType, Kernel->getLinkage(),
                                          KernelName, Kernel->getParent());
       llvm::ValueToValueMapTy Maptype;
-      for (llvm::Argument &Arg : Kernel->args()) {
-        Maptype.insert(&Arg, &Arg);
+      for (size_t i = 0 ; i < Kernel->arg_size() ; ++i) {
+        Maptype.insert({Kernel->getArg(i), NewKernel->getArg(i)});  
       }
       llvm::SmallVector<llvm::ReturnInst *> RetInst{};
-      std::cerr << "OK1" << std::endl;
       llvm::CloneFunctionInto(NewKernel, Kernel, Maptype,
                               CloneFunctionChangeType::GlobalChanges, RetInst);
       // kernel->replaceAllUsesWith(new_kernel);
@@ -550,7 +549,7 @@ public:
         if (elem.first == cur_kernel) {
           collection.push_back(elem.second);
         } else {
-          handlePipeCreation(cur_kernel, collection);
+          handlePipeCreations(cur_kernel, collection);
           cur_kernel = elem.first;
           collection = pipe_creat_coll{elem.second};
         }
