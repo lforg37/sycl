@@ -54,3 +54,11 @@ add_llvm_external_project(clang-tools-extra extra)
 add_clang_subdirectory(libclang)
 
 add_clang_subdirectory(amdgpu-arch)
+
+if ("mlir" IN_LIST LLVM_ENABLE_PROJECTS)
+  if (CLANG_BUILT_STANDALONE)
+    message(WARNING "archgen-mlir doesnt support being build as standalone so it was not enabled")
+  else()
+    add_clang_subdirectory(archgen-mlir)
+  endif()
+endif()
