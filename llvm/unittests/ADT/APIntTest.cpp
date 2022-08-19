@@ -3134,4 +3134,20 @@ TEST(APIntTest, DenseMap) {
   Map.find(ZeroWidthInt);
 }
 
+TEST(APIntTest, RelativeShifts) {
+  llvm::APInt Val1(32, 3 << 14);
+  EXPECT_EQ(Val1.relativeAShl(4).getZExtValue(), 3u << 18);
+  EXPECT_EQ(Val1.relativeAShl(-4).getZExtValue(), 3u << 10);
+
+  EXPECT_EQ(Val1.relativeLShl(4).getZExtValue(), 3u << 18);
+  EXPECT_EQ(Val1.relativeLShl(-4).getZExtValue(), 3u << 10);
+
+  llvm::APInt Val2(32, -(3 << 14));
+  EXPECT_EQ(Val2.relativeAShr(4).getZExtValue(),  0xfffff400u);
+  EXPECT_EQ(Val2.relativeAShr(-4).getZExtValue(), 0xfff40000u);
+
+  EXPECT_EQ(Val2.relativeLShr(4).getZExtValue(),  0x0ffff400u);
+  EXPECT_EQ(Val2.relativeLShr(-4).getZExtValue(), 0xfff40000u);
+}
+
 } // end anonymous namespace
