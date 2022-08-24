@@ -55,15 +55,15 @@ static void printArithFastMathAttr(OpAsmPrinter &printer, Operation *op,
 static IntegerAttr addIntegerAttrs(PatternRewriter &builder, Value res,
                                    Attribute lhs, Attribute rhs) {
   return builder.getIntegerAttr(res.getType(),
-                                lhs.cast<IntegerAttr>().getInt() +
-                                    rhs.cast<IntegerAttr>().getInt());
+                                lhs.cast<IntegerAttr>().getValue() +
+                                    rhs.cast<IntegerAttr>().getValue());
 }
 
 static IntegerAttr subIntegerAttrs(PatternRewriter &builder, Value res,
                                    Attribute lhs, Attribute rhs) {
   return builder.getIntegerAttr(res.getType(),
-                                lhs.cast<IntegerAttr>().getInt() -
-                                    rhs.cast<IntegerAttr>().getInt());
+                                lhs.cast<IntegerAttr>().getValue() -
+                                    rhs.cast<IntegerAttr>().getValue());
 }
 
 /// Invert an integer comparison predicate.
@@ -1309,7 +1309,7 @@ OpFoldResult arith::IndexCastOp::fold(ArrayRef<Attribute> operands) {
   // A little hack because we go through int. Otherwise, the size of the
   // constant might need to change.
   if (auto value = operands[0].dyn_cast_or_null<IntegerAttr>())
-    return IntegerAttr::get(getType(), value.getInt());
+    return IntegerAttr::get(getType(), value.getValue());
 
   return {};
 }
